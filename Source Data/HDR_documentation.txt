@@ -1,0 +1,135 @@
+TITLE: Human Development Report data (1990 - 2015)
+
+# INTRO:
+This data set combines data downloaded from the HDR report.
+For more details see: http://hdr.undp.org/en/data
+
+and Regional and Development Classifications are from UNSD.
+For details see: https://unstats.un.org/unsd/methodology/m49/overview/
+
+Processing of the data is described in Prep_data.html
+
+# DATA Description:
+4518 obs in 10 variables
+
+* Country = Factor with 194 levels: Country name
+(see list of countries below)
+
+* year = integer 1990 to 2015
+
+* Human Development Index: unitless number from 0-1
+
+* Life Expectancy Index: unitless number from 0-1
+
+* Education Index: unitless number from 0-1
+
+* Income Index: unitless number from 0-1
+
+* Human Development Index Male: unitless number from 0-1
+
+* Human Development Index Female: unitless number from 0-1
+
+* Region = Factor with 5 levels: Region Name
+  Africa, Americas, Asia, Europe, Oceania
+ 
+* Development Classification = Factor with 2 levels: Development Classification
+  Developing, Developed
+
+List of Countries:
+  [1] "Afghanistan"                               "Albania"                                  
+  [3] "Algeria"                                   "Andorra"                                  
+  [5] "Angola"                                    "Antigua and Barbuda"                      
+  [7] "Argentina"                                 "Armenia"                                  
+  [9] "Australia"                                 "Austria"                                  
+ [11] "Azerbaijan"                                "Bahamas"                                  
+ [13] "Bahrain"                                   "Bangladesh"                               
+ [15] "Barbados"                                  "Belarus"                                  
+ [17] "Belgium"                                   "Belize"                                   
+ [19] "Benin"                                     "Bhutan"                                   
+ [21] "Bolivia (Plurinational State of)"          "Bosnia and Herzegovina"                   
+ [23] "Botswana"                                  "Brazil"                                   
+ [25] "Brunei Darussalam"                         "Bulgaria"                                 
+ [27] "Burkina Faso"                              "Burundi"                                  
+ [29] "Cabo Verde"                                "Cambodia"                                 
+ [31] "Cameroon"                                  "Canada"                                   
+ [33] "Central African Republic"                  "Chad"                                     
+ [35] "Chile"                                     "China"                                    
+ [37] "Colombia"                                  "Comoros"                                  
+ [39] "Congo"                                     "Congo (Democratic Republic of the)"       
+ [41] "Costa Rica"                                "Côte d'Ivoire"                            
+ [43] "Croatia"                                   "Cuba"                                     
+ [45] "Cyprus"                                    "Czech Republic"                           
+ [47] "Denmark"                                   "Djibouti"                                 
+ [49] "Dominica"                                  "Dominican Republic"                       
+ [51] "Ecuador"                                   "Egypt"                                    
+ [53] "El Salvador"                               "Equatorial Guinea"                        
+ [55] "Eritrea"                                   "Estonia"                                  
+ [57] "Ethiopia"                                  "Fiji"                                     
+ [59] "Finland"                                   "France"                                   
+ [61] "Gabon"                                     "Gambia"                                   
+ [63] "Georgia"                                   "Germany"                                  
+ [65] "Ghana"                                     "Greece"                                   
+ [67] "Grenada"                                   "Guatemala"                                
+ [69] "Guinea"                                    "Guinea-Bissau"                            
+ [71] "Guyana"                                    "Haiti"                                    
+ [73] "Honduras"                                  "Hong Kong, China (SAR)"                   
+ [75] "Hungary"                                   "Iceland"                                  
+ [77] "India"                                     "Indonesia"                                
+ [79] "Iran (Islamic Republic of)"                "Iraq"                                     
+ [81] "Ireland"                                   "Israel"                                   
+ [83] "Italy"                                     "Jamaica"                                  
+ [85] "Japan"                                     "Jordan"                                   
+ [87] "Kazakhstan"                                "Kenya"                                    
+ [89] "Kiribati"                                  "Korea (Democratic People's Rep. of)"      
+ [91] "Korea (Republic of)"                       "Kuwait"                                   
+ [93] "Kyrgyzstan"                                "Lao People's Democratic Republic"         
+ [95] "Latvia"                                    "Lebanon"                                  
+ [97] "Lesotho"                                   "Liberia"                                  
+ [99] "Libya"                                     "Liechtenstein"                            
+[101] "Lithuania"                                 "Luxembourg"                               
+[103] "Madagascar"                                "Malawi"                                   
+[105] "Malaysia"                                  "Maldives"                                 
+[107] "Mali"                                      "Malta"                                    
+[109] "Marshall Islands"                          "Mauritania"                               
+[111] "Mauritius"                                 "Mexico"                                   
+[113] "Micronesia (Federated States of)"          "Moldova (Republic of)"                    
+[115] "Mongolia"                                  "Montenegro"                               
+[117] "Morocco"                                   "Mozambique"                               
+[119] "Myanmar"                                   "Namibia"                                  
+[121] "Nauru"                                     "Nepal"                                    
+[123] "Netherlands"                               "New Zealand"                              
+[125] "Nicaragua"                                 "Niger"                                    
+[127] "Nigeria"                                   "Norway"                                   
+[129] "Oman"                                      "Pakistan"                                 
+[131] "Palau"                                     "Palestine, State of"                      
+[133] "Panama"                                    "Papua New Guinea"                         
+[135] "Paraguay"                                  "Peru"                                     
+[137] "Philippines"                               "Poland"                                   
+[139] "Portugal"                                  "Qatar"                                    
+[141] "Romania"                                   "Russian Federation"                       
+[143] "Rwanda"                                    "Saint Kitts and Nevis"                    
+[145] "Saint Lucia"                               "Saint Vincent and the Grenadines"         
+[147] "Samoa"                                     "San Marino"                               
+[149] "Sao Tome and Principe"                     "Saudi Arabia"                             
+[151] "Senegal"                                   "Serbia"                                   
+[153] "Seychelles"                                "Sierra Leone"                             
+[155] "Singapore"                                 "Slovakia"                                 
+[157] "Slovenia"                                  "Solomon Islands"                          
+[159] "Somalia"                                   "South Africa"                             
+[161] "South Sudan"                               "Spain"                                    
+[163] "Sri Lanka"                                 "Sudan"                                    
+[165] "Suriname"                                  "Swaziland"                                
+[167] "Sweden"                                    "Switzerland"                              
+[169] "Syrian Arab Republic"                      "Tajikistan"                               
+[171] "Tanzania (United Republic of)"             "Thailand"                                 
+[173] "The former Yugoslav Republic of Macedonia" "Timor-Leste"                              
+[175] "Togo"                                      "Tonga"                                    
+[177] "Trinidad and Tobago"                       "Tunisia"                                  
+[179] "Turkey"                                    "Turkmenistan"                             
+[181] "Tuvalu"                                    "Uganda"                                   
+[183] "Ukraine"                                   "United Arab Emirates"                     
+[185] "United Kingdom"                            "United States"                            
+[187] "Uruguay"                                   "Uzbekistan"                               
+[189] "Vanuatu"                                   "Venezuela (Bolivarian Republic of)"       
+[191] "Viet Nam"                                  "Yemen"                                    
+[193] "Zambia"                                    "Zimbabwe"  

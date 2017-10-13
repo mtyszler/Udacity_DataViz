@@ -1,0 +1,166 @@
+---
+title: "Prepare Data"
+author: "Marcelo Tyszler"
+date: "13 juli 2017"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Intro
+This documents combines data downloaded from the HDR report.
+
+For more details see: http://hdr.undp.org/en/data
+
+Regional and Development Classifications are from UNSD.
+
+For details see: https://unstats.un.org/unsd/methodology/m49/overview/
+
+# Auxiliaries
+We load all libraries needed
+
+```{r  Libraries, message=FALSE }
+library(tidyr)
+library(dplyr)
+```
+
+and create a support function
+
+``` {r  import_data function}
+import_data <-function(file_name, data_type){
+  
+  # load the data, skipping the first row
+  imp <- read.csv(file_name,skip=1)
+  
+  # drop a column we will not use
+  imp$HDI.Rank..2015. <- NULL
+  
+  # convert to wide format
+  imp_long <-gather(imp, year, value, 2:length(imp), na.rm = TRUE)
+  
+  #rename value column
+  colnames(imp_long)[3]<-data_type
+  
+  #clear leading blanks
+  imp_long$Country = factor(substring(imp_long$Country,2))
+  
+  # Convert year into numeric
+  imp_long$year = as.numeric(substring(imp_long$year,2))
+  
+  return(imp_long)
+}
+
+```
+
+# Data preparation
+
+## Load Data
+We first load all the base files:
+
+``` {r  load base files, message=FALSE,warning=FALSE}
+hdi <-import_data("Human development index (HDI).csv", 
+                  "Human Development Index")
+
+life <-import_data("Life expectancy Index.csv", 
+                    "Life Expectancy Index")
+
+edu <-import_data("Education Index.csv", "Education Index")
+
+inc <-import_data("Income Index.csv", "Income Index")
+
+hdi_m <-import_data("Human Development Index (HDI), male.csv", 
+                  "Human Development Index Male")
+hdi_f <-import_data("Human Development Index (HDI), female.csv", 
+                  "Human Development Index Female")
+
+
+```
+
+
+## Check all data
+``` {r Check heads, warning = FALSE, message=FALSE}
+head(hdi)
+head(edu)
+head(life)
+head(inc)
+head(hdi_m)
+head(hdi_f)
+
+```
+
+## Join all data sets
+``` {r Join data, warning = FALSE, message=FALSE}
+HDR<-full_join(hdi, life, by=c("Country", "year"))
+HDR<-full_join(HDR, edu, by=c("Country", "year"))
+HDR<-full_join(HDR, inc, by=c("Country", "year"))
+HDR<-full_join(HDR, hdi_m, by=c("Country", "year"))
+HDR<-full_join(HDR, hdi_f, by=c("Country", "year"))
+
+# Remove blanks:
+HDR <-subset(HDR, Country != "")
+
+head(HDR)
+```
+
+## Obtain Development classifications
+```{r Development & Regional classifications}
+## get classifications
+classif <-read.csv("UNSD_classifications.csv")
+colnames(classif)[4]<-"Region"
+colnames(classif)[9]<-"Country"
+colnames(classif)[15]<-"Development Classification"
+classif[10:14]<-NULL
+classif[5:8]<-NULL
+classif[1:3]<-NULL
+
+# update some spelling to match
+classif$Country<-gsub("Democratic Republic of the Congo",
+                      "Congo (Democratic Republic of the)", classif$Country)
+classif$Country<-gsub("Czechia",
+                      "Czech Republic", classif$Country)
+classif$Country<-gsub("CÃ´te d'Ivoire",
+                      "Côte d'Ivoire", classif$Country)
+classif$Country<-gsub("China, Hong Kong Special Administrative Region",
+                      "Hong Kong, China (SAR)",
+                       classif$Country)
+classif$Country<-gsub("Democratic People's Republic of Korea",
+                      "Korea (Democratic People's Rep. of)", classif$Country)
+classif$Country<-gsub("Republic of Korea",
+                      "Korea (Republic of)", classif$Country)
+classif$Country<-gsub("Republic of Moldova",
+                      "Moldova (Republic of)", classif$Country)
+classif$Country<-gsub("United Republic of Tanzania",
+                      "Tanzania (United Republic of)", classif$Country)
+classif$Country<-gsub("United Kingdom of Great Britain and Northern Ireland",
+                      "United Kingdom", classif$Country)
+classif$Country<-gsub("United States of America",
+                      "United States", classif$Country)
+classif$Country<-gsub("State of Palestine",
+                      "Palestine, State of", classif$Country)
+
+
+
+head(classif)
+```
+
+and merge
+```{r join Regional and Development Classification, warning = FALSE, message=FALSE}
+HDR<-left_join(HDR, classif,by="Country")
+
+HDR$Country <-factor(HDR$Country)
+
+head(HDR)
+str(HDR)
+```
+
+remove parts
+```{r remove}
+rm(hdi, life, edu, inc, hdi_f, hdi_m, classif)
+```
+
+## Save the data
+```{r Save}
+save(HDR, file="HDR.Rda")
+write.csv(HDR, file="HDR.csv", row.names = FALSE)
+```

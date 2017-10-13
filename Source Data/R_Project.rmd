@@ -1,0 +1,1151 @@
+---
+title: "Investigation of the Human Development Report data by Marcelo Tyszler"
+author: "Marcelo Tyszler"
+date: "August 6th, 2017"
+output: 
+  html_document:
+    toc: true
+    toc_depth: 3
+    toc_float: true
+---
+
+```{r packages, echo=FALSE, message=FALSE, warning=FALSE}
+library(ggplot2)
+# make sure all graphs have centered titles
+theme_update(plot.title = element_text(hjust = 0.5))
+library(dplyr)
+library(scales)
+# for regressions:
+library(plm)
+```
+
+```{r Load the Data, echo=FALSE, message=FALSE, warning=FALSE}
+# Load the Data
+HDR <-read.csv("HDR.csv",check.names=FALSE)
+```
+
+```{r Group by Year, echo=FALSE, message = FALSE, warning = FALSE}
+# Create groups for future analysis:
+# by year
+HDR_by_year_groups <-group_by(HDR, year)
+
+HDR.by_year <-summarise(HDR_by_year_groups,
+                        `Human Development Index` =
+                          mean(`Human Development Index`, na.rm = TRUE),
+                        `Education Index` = 
+                          mean(`Education Index`, na.rm = TRUE),
+                        `Life Expectancy Index` = 
+                          mean(`Life Expectancy Index`, na.rm = TRUE),
+                        `Income Index` = 
+                          mean(`Income Index`, na.rm = TRUE),
+                        `Human Development Index Male` =
+                          mean(`Human Development Index Male`, na.rm = TRUE),
+                        `Human Development Index Female` =
+                          mean(`Human Development Index Female`, na.rm = TRUE)
+
+                        )
+#by region
+HDR_by_region_groups <-group_by(HDR, Region)
+HDR.by_region <-summarise(HDR_by_region_groups,
+                        `Human Development Index` =
+                          mean(`Human Development Index`, na.rm = TRUE),
+                        `Education Index` = 
+                          mean(`Education Index`, na.rm = TRUE),
+                        `Life Expectancy Index` = 
+                          mean(`Life Expectancy Index`, na.rm = TRUE),
+                        `Income Index` = 
+                          mean(`Income Index`, na.rm = TRUE),
+                        `Human Development Index Male` =
+                          mean(`Human Development Index Male`, na.rm = TRUE),
+                        `Human Development Index Female` =
+                          mean(`Human Development Index Female`, na.rm = TRUE)
+                        )
+
+# by dev
+HDR_by_dev_groups <-group_by(HDR,`Development Classification`)
+
+HDR.by_dev <-summarise(HDR_by_dev_groups,
+                        `Human Development Index` =
+                          mean(`Human Development Index`, na.rm = TRUE),
+                        `Education Index` = 
+                          mean(`Education Index`, na.rm = TRUE),
+                        `Life Expectancy Index` = 
+                          mean(`Life Expectancy Index`, na.rm = TRUE),
+                        `Income Index` = 
+                          mean(`Income Index`, na.rm = TRUE),
+                        `Human Development Index Male` =
+                          mean(`Human Development Index Male`, na.rm = TRUE),
+                        `Human Development Index Female` =
+                          mean(`Human Development Index Female`, na.rm = TRUE)
+                      )
+
+# by year x groupings
+HDR_by_year_dev_groups <-group_by(HDR, year, `Development Classification`)
+HDR_by_year_region_groups <-group_by(HDR, year, Region)
+
+HDR.by_year_dev <-summarise(HDR_by_year_dev_groups,
+                        `Human Development Index` =
+                          mean(`Human Development Index`, na.rm = TRUE),
+                        `Education Index` = 
+                          mean(`Education Index`, na.rm = TRUE),
+                        `Life Expectancy Index` = 
+                          mean(`Life Expectancy Index`, na.rm = TRUE),
+                        `Income Index` = 
+                          mean(`Income Index`, na.rm = TRUE),
+                        `Human Development Index Male` =
+                          mean(`Human Development Index Male`, na.rm = TRUE),
+                        `Human Development Index Female` =
+                          mean(`Human Development Index Female`, na.rm = TRUE)
+
+                        )
+HDR.by_year_region <-summarise(HDR_by_year_region_groups,
+                        `Human Development Index` =
+                          mean(`Human Development Index`, na.rm = TRUE),
+                        `Education Index` = 
+                          mean(`Education Index`, na.rm = TRUE),
+                        `Life Expectancy Index` = 
+                          mean(`Life Expectancy Index`, na.rm = TRUE),
+                        `Income Index` = 
+                          mean(`Income Index`, na.rm = TRUE),
+                        `Human Development Index Male` =
+                          mean(`Human Development Index Male`, na.rm = TRUE),
+                        `Human Development Index Female` =
+                          mean(`Human Development Index Female`, na.rm = TRUE)
+                        )
+
+
+```
+
+```{r Filter Country, echo=FALSE, message = FALSE, warning = FALSE}
+# create a subset with selected countries
+HDR_case_studies <-subset(HDR, 
+                            Country == "Brazil" |
+                            Country == "Netherlands" |
+                            Country == "Japan" |
+                            Country == "Kenya" |
+                            Country == "Syrian Arab Republic" )
+
+```
+
+This reports explores the data from the Human Development Report, UNDP. The
+data set contains data for 194 countries from 1990 until 2015. 
+The selection of variables are the HDI (Human Development Index), 
+its 3 components (Education 
+, Life Expectancy and Income Index), as well as the Male and Female versions of the HDI.
+
+More information can be found here: 
+http://dev-hdr.pantheonsite.io/sites/default/files/hdr2016_technical_notes_0.pdf
+
+and the data sources here:
+http://hdr.undp.org/en/data
+https://unstats.un.org/unsd/methodology/m49/overview/
+
+The data for this report was prepared in using the file 
+[Prep Data](file:Prep_data.html)
+
+# 1 Univariate Plots Section
+### 1.1 General
+First look at the data: 4518 observations, in a unbalanced Panel 
+(not all data available for all countries/year pair)
+```{r data, echo=FALSE}
+str(HDR)
+summary(HDR)
+```
+### 1.2 Data balancing
+First let's look at the balancing of the of data in terms of 
+*Countries*, *Development Classification* and *Region*:
+
+For Countries a table of available entries is more informative:
+```{r Country Count, echo=FALSE, message = FALSE, warning = FALSE}
+head(count(HDR, `Country`), n = 20)
+```
+What is the average count of entries per country?
+```{r Country Count Summary, echo=FALSE, message = FALSE, warning = FALSE}
+# show avg of count per country
+summary(count(HDR, `Country`)[,2])
+```
+I see that most countries have 26 entries in the data set 
+ (yearly from 1990 until 2015)
+
+Let's see the data distribution in terms of 
+*Development Classification* and *Region*:
+
+```{r Country Grouping, echo=FALSE, message = FALSE, warning = FALSE}
+# create a histogram, but uses Percentage instead of count
+ggplot(data = HDR, aes(x = reorder(`Region`, `Region`, function(x) -length(x)))) +
+   geom_bar(fill="darkblue", aes(y = (..count.. )/sum(..count..))) + 
+  ggtitle("Distribution by Region") + 
+  scale_y_continuous(labels = percent, breaks =0:20/20) + ylab("Percentage") +
+  xlab("Region")
+
+ggplot(data = HDR, aes(x = `Development Classification`)) +
+   geom_bar(fill="darkblue", aes(y = (..count.. )/sum(..count..))) + 
+  ggtitle("Distribution by Development Classification") + 
+  scale_y_continuous(labels = percent, breaks =0:20/20) + ylab("Percentage")
+```
+
+About 25% of countries are classified as *Developed*.
+
+
+Let's also see which data is available in each year:
+```{r Data per year, echo=FALSE, message = FALSE, warning = FALSE}
+ggplot(data = subset(HDR, !is.na(HDR$`Human Development Index`)), 
+       aes(x = `year`)) +
+   geom_bar(fill="darkblue") + 
+  ggtitle("HDI data available per year") + 
+  scale_x_continuous(breaks = seq(1990,2015, 5))
+
+ggplot(data = subset(HDR, !is.na(HDR$`Education Index`)), aes(x = `year`)) +
+   geom_bar(fill="darkblue") + 
+  ggtitle("Education Index data available per year") + 
+  scale_x_continuous(breaks = seq(1990,2015, 5))
+
+ggplot(data = subset(HDR, !is.na(HDR$`Life Expectancy Index`)), 
+       aes(x = `year`)) +
+   geom_bar(fill="darkblue") + 
+  ggtitle("Life Expectancy Index data available per year") 
+
+ggplot(data = subset(HDR, !is.na(HDR$`Income Index`)), aes(x = `year`)) +
+   geom_bar(fill="darkblue") + 
+  ggtitle("Income Index data available per year") + 
+  scale_x_continuous(breaks = seq(1990,2015, 5))
+
+# add limits parameter to have the graph starting from 1990
+ggplot(data = subset(HDR, !is.na(HDR$`Human Development Index Male`)), 
+       aes(x = `year`)) +
+   geom_bar(fill="darkblue") + 
+  ggtitle("HDI Male data available per year")  + 
+  scale_x_continuous(limits = c(1990, 2015), breaks = seq(1990,2015, 5)) 
+
+ggplot(data = subset(HDR, !is.na(HDR$`Human Development Index Female`)), 
+       aes(x = `year`)) +
+   geom_bar(fill="darkblue") + 
+  ggtitle("HDI Female data available per year")  + 
+  scale_x_continuous(limits = c(1990, 2015), breaks = seq(1990,2015, 5)) 
+```
+
+HDI is available for most countries in each year.
+
+Life Expectancy, Education and Income Indices are available for 1990, 1995, 2000
+, 2005, 2010-2015.
+
+HDI male/female is available for 2000, 2005, 2010-2015
+
+### 1.3 Main data
+Now let's explore the main data. First lets look at the HDI and its 3 components:
+
+```{r HDI, echo=FALSE, message = FALSE, warning = FALSE}
+ggplot(data = HDR, aes(x = `Human Development Index`)) +
+   geom_histogram(fill="darkblue", binwidth = 0.01) + 
+   scale_x_continuous(breaks = 0:10/10) + 
+  ggtitle("HDI distribution")
+
+ggplot(data = HDR, aes(x = `Education Index`)) +
+   geom_histogram(fill="darkblue", binwidth = 0.01) + 
+   scale_x_continuous(breaks = 0:10/10) + 
+  ggtitle("Education Index distribution")
+
+ggplot(data = HDR, aes(x = `Life Expectancy Index`)) +
+   geom_histogram(fill="darkblue", binwidth = 0.01) + 
+   scale_x_continuous(breaks = 0:10/10) + 
+  ggtitle("Life Expectancy Indexdistribution")
+
+ggplot(data = HDR, aes(x = `Income Index`)) +
+   geom_histogram(fill="darkblue", binwidth = 0.01) + 
+   scale_x_continuous(breaks = 0:10/10) + 
+  ggtitle("Income Index distribution")
+
+ggplot(data = HDR, aes(x = `Human Development Index Male`)) +
+   geom_histogram(fill="darkblue", binwidth = 0.01) + 
+   scale_x_continuous(breaks = 0:10/10) + 
+  ggtitle("Male HDI distribution")
+
+ggplot(data = HDR, aes(x = `Human Development Index Female`)) +
+   geom_histogram(fill="darkblue", binwidth = 0.01) + 
+   scale_x_continuous(breaks = 0:10/10) + 
+  ggtitle("Female HDI distribution")
+
+```
+
+I notice here in the HDI and Education a bi-modal distribution.
+Life Expectancy is mostly concentrated around 0.8-0.9
+Income is mostly spread with some peak at 1, which is the cap value.
+
+
+# Univariate Analysis
+### What is the structure of your dataset?
+The data set has 4518 observation in 10 variables. 
+The primary key of this data set is the combination Country + year. 
+There are 194 Countries with yearly data from 1990 up to 2015
+
+The other variables are the Human Development Index and its 3 components (
+Life Expectancy, Education and Income Indices), the HDI for males and for
+females, Regional classification and Development classification.
+
+Not all data is available for all countries in all years. 
+HDI is available for most countries in each year.
+
+Life Expectancy, Education and Income Indices are available for 1990, 1995, 2000
+, 2005, 2010-2015.
+
+HDI male/female is available for 2000, 2005, 2010-2015
+
+
+### What is/are the main feature(s) of interest in your dataset?
+I am interested in 
+(1) the global distribution of HDI and 
+(2) how HDI developed over time.
+
+
+### What other features in the dataset do you think will help support your \
+investigation into your feature(s) of interest?
+
+The components of the HDI are of interest, and how they correlate.
+The regional and development classifications will also support the analysis
+
+### Did you create any new variables from existing variables in the dataset?
+I created summaries per year, and year x region, year x development
+classifications, a subset of selected countries and one subset per each
+selected country (which will be used further in the analysis)
+
+The summaries are to allow plotting over year, grouped by region or development 
+classification. The subset of selected countries is to plot by country, but 
+just a few to enable visual inspection. The individual country subset is allow
+to compare (in the next sections) different variables at country level.
+
+### Of the features you investigated, were there any unusual distributions? \
+Did you perform any operations on the data to tidy, adjust, or change the form \
+of the data? If so, why did you do this?
+
+I only created summaries, in order to be able to plot time-series for groups 
+or selected countries. The indices are already normalized and scaled, so I
+did not expect to need any further adjustments. 
+
+
+# 2 Bivariate Plots Section
+### 2.1 Distribution within groups
+I noticed that HDI and Education had a bi-modal distribution. This could 
+suggest two groups of countries clustered around two peaks.
+
+#### 2.1.1 Distribution within Development Classifications
+
+What would these graphs look like by *Development classification*?
+
+```{r HDI by Development, echo=FALSE, message = FALSE, warning = FALSE}
+ggplot(data = HDR, aes(x = `Human Development Index`)) +
+   geom_histogram(fill="darkblue", binwidth = 0.01) + 
+   scale_x_continuous(breaks = 0:10/10) +
+  facet_wrap(~`Development Classification`, ncol = 2) + 
+  ggtitle("HDI distribution by Development Classification")
+
+ggplot(data = HDR, aes(x = `Education Index`)) +
+   geom_histogram(fill="darkblue", binwidth = 0.01) + 
+   scale_x_continuous(breaks = 0:10/10) +
+  facet_wrap(~`Development Classification`, ncol = 2) + 
+  ggtitle("Education Index distribution by Development Classification")
+
+ggplot(data = HDR, aes(x = `Life Expectancy Index`)) +
+   geom_histogram(fill="darkblue", binwidth = 0.01) + 
+   scale_x_continuous(breaks = 0:10/10) +
+  facet_wrap(~`Development Classification`, ncol = 2) + 
+  ggtitle("Life Expectancy Index distribution by Development Classification")
+
+ggplot(data = HDR, aes(x = `Income Index`)) +
+   geom_histogram(fill="darkblue", binwidth = 0.01) + 
+   scale_x_continuous(breaks = 0:10/10) +
+  facet_wrap(~`Development Classification`, ncol = 2) + 
+  ggtitle("Income Index distribution by Development Classification")
+
+ggplot(data = HDR, aes(x = `Human Development Index Male`)) +
+   geom_histogram(fill="darkblue", binwidth = 0.01) + 
+   scale_x_continuous(breaks = 0:10/10) +
+  facet_wrap(~`Development Classification`, ncol = 2) + 
+  ggtitle("HDI Male distribution by Development Classification")
+
+ggplot(data = HDR, aes(x = `Human Development Index Female`)) +
+   geom_histogram(fill="darkblue", binwidth = 0.01) + 
+   scale_x_continuous(breaks = 0:10/10) +
+  facet_wrap(~`Development Classification`, ncol = 2) + 
+  ggtitle("HDI Female distribution by Development Classification")
+
+
+```
+
+I see that the Developed countries clear have higher values, but the
+bi-modality of the HDI still shows within the Developing Countries.
+
+#### 2.1.2 Distribution within Regions
+Let's see what the distributions are by *Region*:
+
+```{r HDI by Region, echo=FALSE, message = FALSE, warning = FALSE}
+ggplot(data = HDR, aes(x = `Human Development Index`)) +
+   geom_histogram(fill="darkblue", binwidth = 0.01) + 
+   scale_x_continuous(breaks = 0:10/10) +
+  facet_wrap(~Region, ncol = 3) + 
+  ggtitle("HDI distribution by Region")
+
+ggplot(data = HDR, aes(x = `Education Index`)) +
+   geom_histogram(fill="darkblue", binwidth = 0.01) + 
+   scale_x_continuous(breaks = 0:10/10) +
+  facet_wrap(~Region, ncol = 3)  + 
+  ggtitle("Education Index distribution by Region")
+
+ggplot(data = HDR, aes(x = `Life Expectancy Index`)) +
+   geom_histogram(fill="darkblue", binwidth = 0.01) + 
+   scale_x_continuous(breaks = 0:10/10) +
+  facet_wrap(~Region, ncol = 3)  + 
+  ggtitle("Life Expectancy Index distribution by Region")
+
+ggplot(data = HDR, aes(x = `Income Index`)) +
+   geom_histogram(fill="darkblue", binwidth = 0.01) + 
+   scale_x_continuous(breaks = 0:10/10) +
+  facet_wrap(~Region, ncol = 3)  + 
+  ggtitle("Income Index distribution by Region")
+
+ggplot(data = HDR, aes(x = `Human Development Index Male`)) +
+   geom_histogram(fill="darkblue", binwidth = 0.01) + 
+   scale_x_continuous(breaks = 0:10/10) +
+  facet_wrap(~Region, ncol = 2) + 
+  ggtitle("HDI Male distribution by Region")
+
+ggplot(data = HDR, aes(x = `Human Development Index Female`)) +
+   geom_histogram(fill="darkblue", binwidth = 0.01) + 
+   scale_x_continuous(breaks = 0:10/10) +
+  facet_wrap(~Region, ncol = 2)  + 
+  ggtitle("HDI Female distribution by Region")
+
+
+```
+
+I notice that, generally speaking, Europe has higher values and Africa lower 
+values. 
+
+See averages:
+
+```{r Table by group, echo=FALSE, message = FALSE, warning = FALSE}
+head(HDR.by_region)
+head(HDR.by_dev)
+```
+
+I see a curious spike of Income index at 1 in Asia. This seems to be correct,
+as there is a cap of index at 1.
+
+### 2.2 Scatter plots
+I know turn to investigate the HDI and its components.
+
+Since the HDI is the simple average of it's 3 components, I plot a reference
+line from which the dots can never fall under. 
+I add also a best fit loess curve.
+
+``` {r Scatter,  echo=FALSE, message = FALSE, warning = FALSE}
+# create scatterplots
+# use coord_cartesian to make sure all are visually comparable
+# add geom_segment to create a reference line
+# use aes to create a legend
+
+ggplot(data = HDR, aes(y = `Human Development Index`, x = `Life Expectancy Index`)) + 
+  geom_point(alpha = 1/10) + 
+  coord_cartesian(xlim = 0:1, ylim = 0:1) + 
+  geom_segment(aes(x=0, y=0, xend = 1, yend = 1/3, 
+                   color = "Reference Line (x/3)"),linetype = "dashed") + 
+  geom_smooth(method = loess, aes(color = "Best fit"))+
+  guides(color = guide_legend(title = "Lines"))
+
+ggplot(data = HDR, aes(y = `Human Development Index`, x = `Education Index`)) + 
+  geom_point(alpha = 1/10) + 
+  coord_cartesian(xlim = 0:1, ylim = 0:1) + 
+  geom_segment(aes(x=0, y=0, xend = 1, yend = 1/3, 
+                   color = "Reference Line (x/3)"),linetype = "dashed") +
+  geom_smooth(method = loess, aes(color = "Best fit"))+
+  guides(color = guide_legend(title = "Lines"))
+
+ggplot(data = HDR, aes(y = `Human Development Index`, x = `Income Index`)) + 
+  geom_point(alpha = 1/10) + 
+  coord_cartesian(xlim = 0:1, ylim = 0:1) + 
+  geom_segment(aes(x=0, y=0, xend = 1, yend = 1/3, 
+                   color = "Reference Line (x/3)"),linetype = "dashed") +
+  geom_smooth(method = loess, aes(color = "Best fit"))+
+  guides(color = guide_legend(title = "Lines"))
+```
+
+I notice a slight concave relationship between HDI and the Life expectancy
+index and a fairly linear relation between HDI and Education and Income index.
+
+Let's compute the correlations
+
+``` {r correlations second,  echo=FALSE, message = FALSE, warning = FALSE}
+# Compute correlations
+cor.test(HDR$`Human Development Index`,HDR$`Life Expectancy Index`)
+cor.test(HDR$`Human Development Index`,HDR$`Education Index`)
+cor.test(HDR$`Human Development Index`,HDR$`Income Index`)
+```
+
+The close to 1 correlation suggests a high correlation among components, since
+the HDI is the simple average of its components.
+
+Moreover, since all dots fall clearly above the reference line, this also 
+suggests a strong correlation among the components.
+
+I plot also the scatter plots among the components, 
+and add the x=y reference line.
+``` {r Scatter components,  echo=FALSE, message = FALSE, warning = FALSE}
+ggplot(data = HDR, aes(x = `Life Expectancy Index`, y = `Education Index`)) + 
+  geom_point(alpha = 1/10) + 
+  coord_cartesian(xlim = 0:1, ylim = 0:1) + 
+  geom_segment(aes(x=0, y=0, xend = 1, yend = 1/3, 
+                   color = "Reference Line (x=y)"),linetype = "dashed")+
+  geom_smooth(method = lm, aes(color = "Best linear fit")) +
+  guides(color = guide_legend(title = "Lines"))
+
+ggplot(data = HDR, aes(x = `Life Expectancy Index`, y = `Income Index`)) + 
+geom_point(alpha = 1/10) + 
+  coord_cartesian(xlim = 0:1, ylim = 0:1) + 
+  geom_segment(aes(x=0, y=0, xend = 1, yend = 1, 
+                   color = "Reference Line (x=y)"),linetype = "dashed") + 
+  geom_smooth(method = lm, aes(color = "Best linear fit")) +
+  guides(color = guide_legend(title = "Lines"))
+
+ggplot(data = HDR, aes(y = `Income Index`, x = `Education Index`)) + 
+geom_point(alpha = 1/10) + 
+  coord_cartesian(xlim = 0:1, ylim = 0:1) + 
+  geom_segment(aes(x=0, y=0, xend = 1, yend = 1, 
+                   color = "Reference Line (x=y)"),linetype = "dashed") + 
+  geom_smooth(method = lm, aes(color = "Best linear fit"))  +
+  guides(color = guide_legend(title = "Lines"))
+
+```
+
+Let's compute the correlations:
+
+``` {r correlations,  echo=FALSE, message = FALSE, warning = FALSE}
+cor.test(HDR$`Education Index`,HDR$`Life Expectancy Index`)
+cor.test(HDR$`Income Index`,HDR$`Education Index`)
+cor.test(HDR$`Life Expectancy Index`,HDR$`Income Index`)
+```
+
+Therefore all components seem highly correlated to each other,
+with Income and Education slightly stronger.
+
+### 2.3 Evolution over time
+It is also interesting to see how the averages evolved over time:
+```{r Plot HDI by Year, echo=FALSE, message = FALSE, warning = FALSE}
+ggplot(data = HDR.by_year, aes(y = `Human Development Index`, x = `year`))+
+  geom_point(aes(color =  "Human Development Index")) +
+  geom_point(data = HDR.by_year, aes(y = `Education Index`, x = `year`, 
+                                     color = "Education Index"))+
+  geom_point(data = HDR.by_year, aes(y = `Life Expectancy Index`, x = `year`, 
+                                     color = "Life Expectancy Index"))+
+  geom_point(data = HDR.by_year, aes(y = `Income Index`, x = `year`, 
+                                     color = "Income Index"))+
+  scale_y_continuous(breaks = 0:10/10,  limits = (0:1)) + 
+  guides(color = guide_legend("Index")) +
+  ggtitle("HDI and Components over time") + 
+  labs(y = "Index value")
+
+```
+```{r Plot HDI MF by Year, echo=FALSE, message = FALSE, warning = FALSE}
+ggplot(data = HDR.by_year, aes(y = `Human Development Index Male`, x = `year`))+
+  geom_point(aes(color = "Male")) +
+  geom_point(data = HDR.by_year, aes(y = `Human Development Index Female`, 
+                                     x = `year`, color = "Female"))+
+  scale_y_continuous(breaks = 0:10/10,  limits = (0:1)) + 
+  guides(color = guide_legend("Index")) +
+  ggtitle("HDI Male/Female over time") + 
+  labs(y = "Index value")
+
+```
+
+I notice an overall positive trend, without any index overtaking the other 
+over time. Reinforcing what I saw before, Life Expectancy Index is the highest
+components, all components seem strongly correlated to each other and to the HDI.
+
+The Income Index seems like the best predictor of the HDI.
+
+
+### 2.4 Country Case studies
+Finally, it is interesting to see the evolution of the indices in a few 
+countries, as a case study. I look at the Brazil, Netherlands (both my home
+countries), Japan, Kenya and Australia (one per other region)
+and Syria (special case)
+
+```{r Plot by Country, echo=FALSE, message = FALSE, warning = FALSE}
+ggplot(data = HDR_case_studies, aes(y = `Human Development Index`, x = `year`))+
+  geom_point(aes(color = `Country`)) + 
+  scale_y_continuous(breaks = 0:10/10,  limits = (0:1)) +
+  ggtitle("HDI by Selected Countries over time")
+
+ggplot(data = HDR_case_studies, aes(y = `Education Index`, x = `year`))+
+  geom_point(aes(color = `Country`)) + 
+  scale_y_continuous(breaks = 0:10/10,  limits = (0:1)) +
+  ggtitle("Education Index by Selected Countries over time")
+
+ggplot(data = HDR_case_studies, aes(y = `Life Expectancy Index`, x = `year`))+
+  geom_point(aes(color = `Country`)) + 
+  scale_y_continuous(breaks = 0:10/10,  limits = (0:1)) +
+  ggtitle("Life Expectancy Index by Selected Countries over time")
+
+ggplot(data = HDR_case_studies, aes(y = `Income Index`, x = `year`))+
+  geom_point(aes(color = `Country`)) + 
+  scale_y_continuous(breaks = 0:10/10,  limits = (0:1)) +
+  ggtitle("Income Index by Selected Countries over time")
+
+ggplot(data = HDR_case_studies, aes(y = `Human Development Index Male`, 
+                                    x = `year`))+
+  geom_point(aes(color = `Country`)) + 
+  scale_y_continuous(breaks = 0:10/10,  limits = (0:1)) +
+  ggtitle("HDI Male by Selected Countries over time")
+
+ggplot(data = HDR_case_studies, aes(y = `Human Development Index Male`, 
+                                    x = `year`))+
+  geom_point(aes(color = `Country`)) + 
+  scale_y_continuous(breaks = 0:10/10,  limits = (0:1)) +
+  ggtitle("HDI Female by Selected Countries over time")
+
+```
+
+I notice here the similar overall positive trend. Syria is an interesting case,
+and due to war I notice a sharp drop from 2010. Kenya has a negative trend
+until 2000 and start improving since. 
+
+I notice also big spread in the values, with Netherlands on top and Kenya at 
+the bottom.
+
+# Bivariate Analysis
+
+### Talk about some of the relationships you observed in this part of the \
+investigation. How did the feature(s) of interest vary with other features in \
+the data set?
+
+I notice 3 main things:
+1. Typically Europe has high values and Africa low values for the indices
+2. Overtime all indices grow and the rank order stays
+3. All three sub-components are highly correlated with the HDI, and the value of
+the Income Index is the best predictor of the HDI.
+
+### Did you observe any interesting relationships between the other features \
+(not the main feature(s) of interest)?
+
+I notice that all 3 components are highly correlated to each other (>0.80).
+HDI and Life Expectancy seem to have a concave relationship, indicating that
+at lower levels of Life Expectancy, marginal increases are not yet 
+enough to improve much the HDI.
+
+### What was the strongest relationship you found?
+HDI and Income Index. Even though the correlation coefficient of HDI and 
+the Education Index is slightly stronger, the Income Index average is almost
+identical to the HDI value.
+
+
+# 3 Multivariate Plots Section
+
+### 3.1 Scatter plots
+We repeat the previous scatter plots, but now we add the groupings:
+
+#### 3.2 Development Classification
+``` {r Scatter Groups Dev,  echo=FALSE, message = FALSE, warning = FALSE}
+ggplot(data = HDR, aes(y = `Human Development Index`, x = `Life Expectancy Index`)) + 
+  geom_point(aes(color = `Development Classification`), alpha = 1/5) + 
+  coord_cartesian(xlim = 0:1, ylim = 0:1) + 
+  geom_segment(aes(x=0, y=0, xend = 1, yend = 1/3, 
+                   color = "Reference Line (x/3)"),linetype = "dashed") +
+  geom_smooth(method = loess, aes(color = "Best fit"))+
+  guides(color = guide_legend(title = "Legend"))
+
+ggplot(data = HDR, aes(y = `Human Development Index`, x = `Education Index`)) + 
+  geom_point(aes(color = `Development Classification`), alpha = 1/5) + 
+  coord_cartesian(xlim = 0:1, ylim = 0:1) + 
+  geom_segment(aes(x=0, y=0, xend = 1, yend = 1/3, 
+                   color = "Reference Line (x/3)"),linetype = "dashed") +
+  geom_smooth(method = loess, aes(color = "Best fit"))+
+  guides(color = guide_legend(title = "Legend"))
+
+ggplot(data = HDR, aes(y = `Human Development Index`, x = `Income Index`)) + 
+  geom_point(aes(color = `Development Classification`), alpha = 1/5) + 
+  coord_cartesian(xlim = 0:1, ylim = 0:1) + 
+  geom_segment(aes(x=0, y=0, xend = 1, yend = 1/3, 
+                   color = "Reference Line (x/3)"),linetype = "dashed") +
+  geom_smooth(method = loess, aes(color = "Best fit"))+
+  guides(color = guide_legend(title = "Legend"))
+
+ggplot(data = HDR, aes(x = `Life Expectancy Index`, y = `Education Index`)) + 
+  geom_point(aes(color = `Development Classification`), alpha = 1/5) + 
+  coord_cartesian(xlim = 0:1, ylim = 0:1) + 
+  geom_segment(aes(x=0, y=0, xend = 1, yend = 1, 
+                   color = "Reference Line (x=y)"),linetype = "dashed") +
+  geom_smooth(method = lm, aes(color = "Best linear fit"))+
+  guides(color = guide_legend(title = "Legend"))
+
+ggplot(data = HDR, aes(x = `Life Expectancy Index`, y = `Income Index`)) + 
+  geom_point(aes(color = `Development Classification`), alpha = 1/5) + 
+  coord_cartesian(xlim = 0:1, ylim = 0:1) + 
+  geom_segment(aes(x=0, y=0, xend = 1, yend = 1, 
+                   color = "Reference Line (x=y)"),linetype = "dashed") +
+  geom_smooth(method = lm, aes(color = "Best linear fit"))+
+  guides(color = guide_legend(title = "Legend"))
+
+ggplot(data = HDR, aes(y = `Income Index`, x = `Education Index`)) + 
+  geom_point(aes(color = `Development Classification`), alpha = 1/5) + 
+  coord_cartesian(xlim = 0:1, ylim = 0:1) + 
+  geom_segment(aes(x=0, y=0, xend = 1, yend = 1, 
+                   color = "Reference Line (x=y)"),linetype = "dashed") +
+  geom_smooth(method = lm, aes(color = "Best linear fit"))+
+  guides(color = guide_legend(title = "Legend"))
+
+```
+
+We clearly see that the Developed countries are on the top right corner of all 
+graphs.
+
+#### 3.2 Regions
+``` {r Scatter Groups Region,  echo=FALSE, message = FALSE, warning = FALSE}
+ggplot(data = HDR, aes(y = `Human Development Index`, x = `Life Expectancy Index`)) + 
+  geom_point(aes(color = `Region`), alpha = 1/5) + 
+  coord_cartesian(xlim = 0:1, ylim = 0:1) + 
+  geom_segment(aes(x=0, y=0, xend = 1, yend = 1/3, 
+                   color = "Reference Line (x/3)"),linetype = "dashed") +
+  geom_smooth(method = loess, aes(color = "Best fit"))+
+  guides(color = guide_legend(title = "Legend"))
+
+ggplot(data = HDR, aes(y = `Human Development Index`, x = `Education Index`)) + 
+  geom_point(aes(color = `Region`), alpha = 1/5) + 
+  coord_cartesian(xlim = 0:1, ylim = 0:1) + 
+  geom_segment(aes(x=0, y=0, xend = 1, yend = 1/3, 
+                   color = "Reference Line (x/3)"),linetype = "dashed") +
+  geom_smooth(method = loess, aes(color = "Best fit"))+
+  guides(color = guide_legend(title = "Legend"))
+
+ggplot(data = HDR, aes(y = `Human Development Index`, x = `Income Index`)) + 
+  geom_point(aes(color = `Region`), alpha = 1/5) + 
+  coord_cartesian(xlim = 0:1, ylim = 0:1) + 
+  geom_segment(aes(x=0, y=0, xend = 1, yend = 1/3, 
+                   color = "Reference Line (x/3)"),linetype = "dashed") +
+  geom_smooth(method = loess, aes(color = "Best fit"))+
+  guides(color = guide_legend(title = "Legend"))
+
+ggplot(data = HDR, aes(x = `Life Expectancy Index`, y = `Education Index`)) + 
+  geom_point(aes(color = `Region`), alpha = 1/5) + 
+  coord_cartesian(xlim = 0:1, ylim = 0:1) + 
+  geom_segment(aes(x=0, y=0, xend = 1, yend = 1, 
+                   color = "Reference Line (x=y)"),linetype = "dashed") +
+  geom_smooth(method = lm, aes(color = "Best linear fit"))+
+  guides(color = guide_legend(title = "Legend"))
+
+ggplot(data = HDR, aes(x = `Life Expectancy Index`, y = `Income Index`)) + 
+  geom_point(aes(color = `Region`), alpha = 1/5) + 
+  coord_cartesian(xlim = 0:1, ylim = 0:1) + 
+  geom_segment(aes(x=0, y=0, xend = 1, yend = 1, 
+                   color = "Reference Line (x=y)"),linetype = "dashed") +
+  geom_smooth(method = lm, aes(color = "Best linear fit"))+
+  guides(color = guide_legend(title = "Legend"))
+
+ggplot(data = HDR, aes(y = `Income Index`, x = `Education Index`)) + 
+  geom_point(aes(color = `Region`), alpha = 1/5) +  
+  coord_cartesian(xlim = 0:1, ylim = 0:1) + 
+  geom_segment(aes(x=0, y=0, xend = 1, yend = 1, 
+                   color = "Reference Line (x=y)"),linetype = "dashed") +
+  geom_smooth(method = lm, aes(color = "Best linear fit"))+
+  guides(color = guide_legend(title = "Legend"))
+
+```
+
+We clearly see, confirming the previous graphs,  that the
+Europe is on the top right corner of all graphs, with Africa at the bottom.
+
+
+### 3.1 Components
+We noticed a strong correlation among the 3 components. 
+
+To investigate this, we plot Life Expectancy against Education and use
+Income as the color. We also plot it by region and development classification
+
+```{r HDI components, echo=FALSE, message = FALSE, warning = FALSE}
+ggplot(data = HDR, aes(x = `Life Expectancy Index`, y = `Education Index`)) + 
+  geom_point(aes(color = `Income Index`), alpha = 1/2) + 
+  coord_cartesian(xlim = 0:1, ylim = 0:1) + 
+  geom_segment(aes(x=0, y=0, xend = 1, yend = 1, 
+                   fill = "Reference Line (x=y)"),linetype = "dashed") +
+  guides(fill = guide_legend(title = "Lines"))
+
+ggplot(data = HDR, aes(x = `Life Expectancy Index`, y = `Education Index`)) + 
+  geom_point(aes(color = `Income Index`), alpha = 1/2) + 
+  coord_cartesian(xlim = 0:1, ylim = 0:1) + 
+  geom_segment(aes(x=0, y=0, xend = 1, yend = 1, 
+                   fill = "Reference Line (x=y)"),linetype = "dashed") +
+  guides(fill = guide_legend(title = "Lines")) +
+  facet_wrap(~`Development Classification`, ncol = 3)   
+  
+ggplot(data = HDR, aes(x = `Life Expectancy Index`, y = `Education Index`)) + 
+  geom_point(aes(color = `Income Index`), alpha = 1/2) + 
+  coord_cartesian(xlim = 0:1, ylim = 0:1) + 
+  geom_segment(aes(x=0, y=0, xend = 1, yend = 1, 
+                   fill = "Reference Line (x=y)"),linetype = "dashed") +
+  guides(fill = guide_legend(title = "Lines")) +
+  facet_wrap(~`Region`, ncol = 3)  
+ 
+
+```
+
+These graphs clearly show the strong correlation among all components.
+
+The regional grouping just reinforce what we saw before: 
+high values for Europe, low values for Africa.
+
+### 3.2 Evolution over time by group
+It is also interesting to see how this evolved over time within group.
+
+HDI
+
+```{r Plot HDI by Year group, echo=FALSE, message = FALSE, warning = FALSE}
+ggplot(data = HDR.by_year_dev, aes(y = `Human Development Index`, x = `year`))+
+  geom_point(aes(color = `Development Classification`)) + 
+  scale_y_continuous(breaks = 0:10/10,  limits = (0:1)) +
+  geom_line(data = HDR.by_year, aes(y = `Human Development Index`, 
+                            x = `year`,  fill = "Average"), show.legend =   TRUE) + 
+  guides(fill=guide_legend((title = "Index")))  + 
+  ggtitle("HDI by Development Classification over time")
+
+ggplot(data = HDR.by_year_region, aes(y = `Human Development Index`, x = `year`))+
+  geom_point(aes(color = Region)) + 
+  scale_y_continuous(breaks = 0:10/10,  limits = (0:1)) +
+  geom_line(data = HDR.by_year, aes(y = `Human Development Index`, 
+                          x = `year`,  fill = "Average"), show.legend =   TRUE) + 
+  guides(fill=guide_legend((title = "Index")))  + 
+  ggtitle("HDI by Region over time")
+
+
+```
+
+Education Index
+
+```{r Plot Education by Year group, echo=FALSE, message = FALSE, warning = FALSE}
+ggplot(data = HDR.by_year_dev, aes(y = `Education Index`, x = `year`))+
+  geom_point(aes(color = `Development Classification`)) + 
+  scale_y_continuous(breaks = 0:10/10,  limits = (0:1)) +
+  geom_line(data = subset(HDR.by_year,!is.na(`Education Index`)), 
+            aes(y = `Education Index`, x = `year`,  fill = "Average"), 
+            show.legend =   TRUE)  + 
+  guides(fill=guide_legend((title = "Index")))  + 
+  ggtitle("Education Index by Development Classification over time")
+
+ggplot(data = HDR.by_year_region, aes(y = `Education Index`, x = `year`))+
+  geom_point(aes(color = Region)) + 
+  scale_y_continuous(breaks = 0:10/10,  limits = (0:1)) +
+  geom_line(data = subset(HDR.by_year,!is.na(`Education Index`)), 
+            aes(y = `Education Index`, x = `year`,  fill = "Average"), 
+            show.legend =   TRUE)  + 
+  guides(fill=guide_legend((title = "Index"))) + 
+  ggtitle("Education Index by Region over time")
+
+
+```
+
+Life Expectancy Index
+
+```{r Plot Life Expectancy by Year Group, echo=FALSE, message = FALSE, warning = FALSE}
+
+ggplot(data = HDR.by_year_dev, aes(y = `Life Expectancy Index`, x = `year`))+
+  geom_point(aes(color = `Development Classification`)) + 
+  scale_y_continuous(breaks = 0:10/10,  limits = (0:1)) +
+  geom_line(data = subset(HDR.by_year,!is.na(`Life Expectancy Index`)), 
+            aes(y = `Life Expectancy Index`, x = `year`,  fill = "Average"), 
+            show.legend =   TRUE)  + 
+  guides(fill=guide_legend((title = "Index"))) + 
+  ggtitle("Life Expectancy Index by Development Classification over time")
+
+ggplot(data = HDR.by_year_region, aes(y = `Life Expectancy Index`, x = `year`))+
+  geom_point(aes(color = Region)) + 
+  scale_y_continuous(breaks = 0:10/10,  limits = (0:1)) +
+  geom_line(data = subset(HDR.by_year,!is.na(`Life Expectancy Index`)), 
+            aes(y = `Life Expectancy Index`, x = `year`,  fill = "Average"), 
+            show.legend =   TRUE)  + 
+  guides(fill=guide_legend((title = "Index"))) + 
+  ggtitle("Life Expectancy Index by Region over time")
+
+
+```
+
+Income Index
+
+```{r Plot Income by Year group, echo=FALSE, message = FALSE, warning = FALSE}
+
+ggplot(data = HDR.by_year_dev, aes(y = `Income Index`, x = `year`))+
+  geom_point(aes(color = `Development Classification`)) + 
+  scale_y_continuous(breaks = 0:10/10,  limits = (0:1)) + 
+  geom_line(data = subset(HDR.by_year,!is.na(`Income Index`)), 
+            aes(y = `Income Index`, x = `year`,  fill = "Average"), 
+            show.legend =   TRUE)  + 
+  guides(fill=guide_legend((title = "Index")))+ 
+  ggtitle("Income Index by Development Classification over time")
+
+ggplot(data = HDR.by_year_region, aes(y = `Income Index`, x = `year`))+
+  geom_point(aes(color = Region)) + 
+  scale_y_continuous(breaks = 0:10/10,  limits = (0:1)) +
+  geom_line(data = subset(HDR.by_year,!is.na(`Income Index`)), 
+            aes(y = `Income Index`, x = `year`,  fill = "Average"), 
+            show.legend =   TRUE)  + 
+  guides(fill=guide_legend((title = "Index"))) + 
+  ggtitle("Income Index by Region over time")
+
+
+```
+
+HDI Male
+
+```{r Plot HDI Male by Year group, echo=FALSE, message = FALSE, warning = FALSE}
+ggplot(data = HDR.by_year_dev, aes(y = `Human Development Index Male`, 
+                                   x = `year`))+
+  geom_point(aes(color = `Development Classification`)) + 
+  scale_y_continuous(breaks = 0:10/10,  limits = (0:1)) +
+  geom_line(data = subset(HDR.by_year,!is.na(`Human Development Index Male`)),
+  aes(y = `Human Development Index Male`, x = `year`,  fill = "Average"), 
+  show.legend =   TRUE)  + 
+  guides(fill=guide_legend((title = "Index"))) + 
+  ggtitle("HDI Male by Development Classification over time")
+
+ggplot(data = HDR.by_year_region, aes(y = `Human Development Index Male`, 
+                                      x = `year`))+
+  geom_point(aes(color = Region)) + 
+  scale_y_continuous(breaks = 0:10/10,  limits = (0:1)) +
+  geom_line(data = subset(HDR.by_year,!is.na(`Human Development Index Male`)), 
+  aes(y = `Human Development Index Male`, x = `year`,  fill = "Average"), 
+  show.legend =   TRUE)  + 
+  guides(fill=guide_legend((title = "Index"))) + 
+  ggtitle("HDI Male by Region over time")
+
+```
+
+HDI Female
+
+```{r Plot HDI Female by Year group, echo=FALSE, message = FALSE, warning = FALSE}
+ggplot(data = HDR.by_year_dev, aes(y = `Human Development Index Female`,
+                                   x = `year`))+
+  geom_point(aes(color = `Development Classification`)) + 
+  scale_y_continuous(breaks = 0:10/10,  limits = (0:1)) +
+  geom_line(data = subset(HDR.by_year,!is.na(`Human Development Index Female`)), 
+  aes(y = `Human Development Index Male`, x = `year`,  fill = "Average"), 
+  show.legend =   TRUE)  + 
+  guides(fill=guide_legend((title = "Index"))) + 
+  ggtitle("HDI Female by Development Classification over time")
+
+ggplot(data = HDR.by_year_region, aes(y = `Human Development Index Female`,
+                                      x = `year`))+
+  geom_point(aes(color = Region)) + 
+  scale_y_continuous(breaks = 0:10/10,  limits = (0:1)) +
+  geom_line(data = subset(HDR.by_year,!is.na(`Human Development Index Female`)), 
+  aes(y = `Human Development Index Male`, x = `year`,  fill = "Average"), 
+  show.legend =   TRUE)  + 
+  guides(fill=guide_legend((title = "Index"))) + 
+  ggtitle("HDI Female by Region over time")
+
+```
+
+I notice, as before, an overall positive trend, without Regions nor Development Categories
+overtaking each other. The one exception seems to be the HDI of Oceania which
+drops from 2nd place in 1990 to 4th place in 2015.
+
+Europe ranks consistently at the top, and Africa at the bottom.
+See the comparsion of 1990 with 2015:
+
+```{r Table by group v2, echo=FALSE, message = FALSE, warning = FALSE}
+head(subset(HDR.by_year_region, year == 1990))
+head(subset(HDR.by_year_region, year == 2015))
+head(subset(HDR.by_year_dev, year == 1990))
+head(subset(HDR.by_year_dev, year == 2015))
+```
+
+
+There is some apparent inconsistency: Oceania HDI is 0.69 in 2015, but HDI male
+and HDI female are both above 0.84. The HDI should be in between male and female
+. This is explained by the fact that some countries with low HDI have missing
+values for HDI male and female
+
+### 3.3 Models
+We put it all together in a panel model.
+
+First in a random effects model in order to account for the regional grouping.
+```{r Panel RE, echo=FALSE, message = FALSE, warning = FALSE}
+model.re <- plm(HDR$`Human Development Index` ~  
+                  HDR$`Life Expectancy Index` + HDR$`Income Index` + 
+                  HDR$`Region`, 
+                data = HDR,
+                model = "random", 
+                index=c("Country", "year"))
+
+
+summary(model.re)
+```
+Then in a fixed effect model
+
+```{r Panel FE, echo=FALSE, message = FALSE, warning = FALSE}
+model.fe <- plm(HDR$`Human Development Index` ~  
+                  HDR$`Life Expectancy Index` + HDR$`Income Index` + 
+                  HDR$`Region`, 
+                data = HDR,
+                model = "within", 
+                index=c("Country", "year"))
+
+summary(model.fe)
+```
+
+And we select FE based on the Hausman test:
+```{r Panel Hausman, echo=FALSE, message = FALSE, warning = FALSE}
+phtest(model.fe, model.re)
+```
+
+The Fixed Effect model confirms the strong correlation between components.
+
+However, since the HDI is an average of its components the result is not 
+surprising, but more confirming. Therefore it is also interesting
+to run the models only based on the groupings :
+
+```{r Panel FE Region, echo=FALSE, message = FALSE, warning = FALSE}
+model.feR <- plm(HDR$`Human Development Index` ~  
+                  HDR$`Region`, 
+                data = HDR,
+                model = "within", 
+                index=c("Country", "year"))
+
+summary(model.feR)
+```
+
+
+```{r Panel FE Dev, echo=FALSE, message = FALSE, warning = FALSE}
+model.feD <- plm(HDR$`Human Development Index` ~  
+                  HDR$`Development Classification`, 
+                data = HDR,
+                model = "within", 
+                index=c("Country", "year"))
+
+summary(model.feD)
+```
+Results confirm that developed countries have higher HDI, African countries are
+at the bottom and European at the top.
+
+
+Finally, we saw the the Income Index was a good predictor of HDI:
+```{r Panel FE Inc, echo=FALSE, message = FALSE, warning = FALSE}
+model.feI <- plm(HDR$`Human Development Index` ~  
+                  HDR$`Income Index`, 
+                data = HDR,
+                model = "within", 
+                index=c("Country", "year"))
+
+summary(model.feI)
+```
+The results confirm that.
+
+# Multivariate Analysis
+
+### Talk about some of the relationships you observed in this part of the \
+investigation. Were there features that strengthened each other in terms of \
+looking at your feature(s) of interest?
+
+We confirmed the strong correlation between all components and the regional
+breakdown.
+
+### Were there any interesting or surprising interactions between features?
+
+It was uprising to see that the rankings rarely changed. Moreover, the
+Income Index is highly predicting the HDI, which suggests that only looking
+at that would be enough.
+
+### OPTIONAL: Did you create any models with your dataset? Discuss the \
+strengths and limitations of your model.
+
+I run a few panel models to confirm the effects seen in the graphs. 
+All initial indications were supported.
+
+------
+
+# Final Plots and Summary
+
+### Plot One
+```{r  Plot_One, echo=FALSE, message = FALSE, warning = FALSE}
+ggplot(data = HDR.by_year, aes(y = `Human Development Index`, x = `year`))+
+  geom_point(aes(color =  "Human Development Index")) +
+  geom_point(data = HDR.by_year, aes(y = `Education Index`, x = `year`, 
+                                     color = "Education Index"))+
+  geom_point(data = HDR.by_year, aes(y = `Life Expectancy Index`, x = `year`, 
+                                     color = "Life Expectancy Index"))+
+  geom_point(data = HDR.by_year, aes(y = `Income Index`, x = `year`, 
+                                     color = "Income Index"))+
+  scale_y_continuous(breaks = 0:10/10,  limits = (0:1)) + 
+  guides(color = guide_legend("Index")) +
+  ggtitle("HDI and its components over time") + 
+  labs(y = "Index value")
+```
+
+### Description One
+I like the graph above because it is quite simple, yet, highly informative.
+
+It shows:
+
+* Positive trend of HDI 
+* Similar trend of its components over time
+* Life Expectancy as the highest index
+* Education as the lowest
+* No change in ranks
+* Income index as the individual best predictor of HDI.
+
+### Plot Two
+```{r  Plot_Two, echo=FALSE, message = FALSE, warning = FALSE}
+ggplot(data = HDR, aes(y = `Human Development Index`, x = `Life Expectancy Index`)) + 
+  geom_point(aes(color = `Region`), alpha = 1/5) + 
+  coord_cartesian(xlim = 0:1, ylim = 0:1) + 
+  geom_segment(aes(x=0, y=0, xend = 1, yend = 1/3, 
+                   color = "Reference Line (x/3)"),linetype = "dashed") +
+  geom_smooth(method = loess, aes(color = "Best fit"))+
+  guides(color = guide_legend(title = "Legend")) + 
+  ggtitle("HDI versus Life Expectancy Index across regions")
+```
+
+### Description Two
+This plot shows quite clearly the inequality across regions.
+
+It shows that African countries are still low in the HDI and Life Expectancy 
+indices, while European countries are at the top. It also reinforces the
+fact that the components are highly correlated.
+
+
+### Plot Three
+```{r Plot_Three, echo=FALSE, message = FALSE, warning = FALSE}
+ggplot(data = HDR.by_year_region, aes(y = `Human Development Index`, x = `year`))+
+  geom_point(aes(color = Region)) + 
+  scale_y_continuous(breaks = 0:10/10,  limits = (0:1)) +
+  geom_line(data = HDR.by_year, aes(y = `Human Development Index`, 
+                          x = `year`,  fill = "Average"), show.legend =   TRUE) + 
+  guides(fill=guide_legend((title = "Index")))  + 
+  ggtitle("HDI by Region over time")
+```
+
+### Description Three
+This graph combines insights from the previous two:
+* Africa at the bottom, Europe at the top
+* Positive trend over time
+
+But it adds the insight of a lack of change over time. The gap between
+regions did not close.
+
+------
+
+# Reflection
+In this exercise we looked into the HDI and its components. I found out that
+the 3 components (Life Expectancy, Education and Income Indices) are highly
+correlated to each other, 
+and the Income Index is the best predictor of the HDI.
+
+Moreover, regional differences are strong (Africa versus Europe) and they 
+persist over time. The gap between countries did not close.
+
+The country case studies also show some interesting effects, such as Syria
+having a big fall in HDI values after the war period.
+
+For further analysis it would be nice to investigate more parts of the HDI
+and subgroups of countries, such as eastern European countries before and 
+after liberalization. More over, the other indices from the HDR (such as
+Gender, Poverty, Inequality adjusted) could also be explored in similar manner.
+
+On a higher level, you could discuss the use of the HDI if Income Index
+seems to be enough: is it just that Income and the other go hand-in-hand
+or is the Human Development Report initiative missing important parts of the
+puzzle?
