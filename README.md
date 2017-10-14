@@ -9,7 +9,7 @@ This repository contains the required and supporting files for the final project
 
 # Main Files:
 * [Write\_up.md](Write\_up.md): Markdown file that includes links to my Tableau Public workbooks, and a write-up with four sections: *Summary*, *Design*, *Feedback* and *Resources*
-* [HDR.xls](Source%20Data/HDR.xls): the final data set used to create the visualization
+* [HDR.xlsx](Source%20Data/HDR.xlsx): the final data set used to create the visualization
 * [HDR\_documentation.txt](Source%20Data/HDR\_documentation.txt): description of the data set
 
 # Supporting Files
