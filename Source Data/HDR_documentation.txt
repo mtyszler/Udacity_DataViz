@@ -19,6 +19,15 @@ Processing of the data is described in Prep_data.html
 
 * Human Development Index: unitless number from 0-1
 
+* Human development classi?cation
+
+HDI classifications are based on HDI fixed cutoff points, which are derived from the quartiles of distributions of the component indicators. 
+The cutoff points are :
+HDI of less than 0.550 for low human development, 
+0.550 to 0.699 for medium human development, 
+0.700 to 0.799 for high human development and 
+0.800 or greater for very high human development.
+
 * Life Expectancy Index: unitless number from 0-1
 
 * Education Index: unitless number from 0-1
