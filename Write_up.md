@@ -2,6 +2,12 @@
 Version 1: 
 https://public.tableau.com/views/HDR_v1/HDIStory?:embed=y&:display_count=yes&publish=yes
 
+Version 2:
+https://public.tableau.com/views/HDIincreasesovertimebutgapremainv2/HDIStory?:embed=y&:display_count=yes
+
+Version 3:
+https://public.tableau.com/views/HDIincreasesovertimebutgapremainv3/HDIStory?:embed=y&:display_count=yes&publish=yes
+
 
 
 # Summary
@@ -24,8 +30,29 @@ For steps 1,2,4 I also opted to have a map on the bottom of the screen, with int
 
 For Step 4, I opted to have the countries grouped by region to improve readability.
 
+## Version 2:
+After the feedback received from *version 1* I decide to make the following changes:
+
+* First of all, I also thought the multiple maps were rendering extremely slowly, so I dediced to reduce the number of maps and have only 1 at the frist Step. Moreover removing the number of maps was also improving readibility, since having the maps and the line graphs in the same page was confusing.
+
+* I changed the map colors to be red/green instead of red/blue and showed only 2015.
+
+* I decided to move the world average data to be on the same page as the evoultion per Region
+
+* I put all countries together in one line graph at the end, but I added filters and highlighters by Region and Country to improve interactivity and readability 
+
+* Changed the Tableau Theme to Modern, and changed the colors and font of the story blocks on top.
+
+## Version 3:
+After the feedback received from *version 2* I decide to make the following changes:
+
+* Fine tuned the colors from the first map to be clear divergent red/green
+* Adjusted the size of the story boxes such that scrolling would not be necessary
+
+
 # Feedback
-I requested feedback from a work colleague. This is what he wrote, after interacting with the first version:
+## Version 1
+I requested feedback from a work colleague. This is what he wrote, after interacting with the **first version**:
 
 *What do you notice in the visualization?*
 *	Slow loading, and slow clicking frequently (like reset) *An unexpected error occurred. If you continue to receive this error please contact your Tableau Server Administrator. Session ID: 202E441743324710B747D2F57E7CAC37-0:1 Uncaught TypeError: Cannot read property 'zoneId' of null*
@@ -50,7 +77,14 @@ I requested feedback from a work colleague. This is what he wrote, after interac
 * *Is there something you don’t understand in the graphic?*
  * No 
 
+## Version 2
+After making the changes, I asked him to look at the viz again. This is what he wrote, after interacting with the **second version**:
 
+* On the HDI colour scale you need to add the ‘middle point’ color yellow, otherwise you don’t get enough distinction
+* Jesus tableau has slow zoom. 
+* Map size much better by default though and great it starts 2015
+* Your 4 comments at the top, make it so they  appear without horizontal scrolling. And can you give them a hover state (or default underline) to indicate they are buttons? 
+* I guess you removed most of the other years to speed it up right? To be honest still seems slow and I suspect the other years were only loading ‘on click’. Could you have not sent a request to load all maps on page load? What I don’t get is why the zoom is so slow on tableau because nothing new is loading…
 
 
 # Resources
