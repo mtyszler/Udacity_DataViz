@@ -60,3 +60,7 @@ I based this visualiation on the EDA data and project developed for the Udacity 
 * _Source data/Original Data_  Folder: Here I include all original data as it was before any manipulation
 
 The original data comes from data downloaded from the HDR report (for more details see: http://hdr.undp.org/en/data) and Regional and Development Classifications from UNSD (for details see: https://unstats.un.org/unsd/methodology/m49/overview/)
+
+I also consulted and downloaded this viz to get inspiration for some functionality:
+https://public.tableau.com/profile/susan.li#!/vizhome/HappyPlanetIndex_2/2016WorldHappinessStory
+
