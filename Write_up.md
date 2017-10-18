@@ -15,10 +15,11 @@ I opted to have the Tableau Story told in 4 steps:
 * Step 3: Evolution, by Region, of the 3 components
 * Step 4: Break down by Country, within region
 
+Since all steps involve evolution over time, I opted to show these with line graphs, wtih averages per year. There is one line for World Average, one line for each Region or one line for each Country, depending on the Step.
+
 For all visualizations I opted to highlight the limit point above which it is considered (at least) medium human development (0.550). I did this with a range band in the line graphs and with a color difference in the maps (red for bellow and blue for above).
 
-For stesp 1,2,4 I also opted to have a map on the bottom of the screen, with interaction effects for highlighting of country/region and year
-
+For stesp 1,2,4 I also opted to have a map on the bottom of the screen, with interaction effects for highlighting of country/region and year. The map is informative as can show how regions evolve and help find a specific country of interest, in particular in the last step where there are many lines.
 
 # Feedback
 
